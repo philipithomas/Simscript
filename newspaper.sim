@@ -1,0 +1,70 @@
+'' Newspaper
+
+preamble
+	processes include GENERATOR and CUSTOMER
+	resources include TELLER
+	define MEAN.INTERARRIVAL.TIME, MEAN.SERVICE.TIME,
+	DAY.LENGTH and WAITING.TIME as real variables
+
+	accumulate UTILIZATION as the average of N.X.TELLER
+	accumulate AVG.QUEUE.LENGTH as the average,	MAX.QUEUE.LENGTH as the maximum of N.Q.TELLER
+	tally MEAN.WAITING.TIME as the mean of WAITING.TIME
+end
+
+main
+	N.TELLER=2
+	MEAN.INTERARRIVAL.TIME = .5
+	MEAN.SERVICE.TIME = 5/6
+	DAY.LENGTH = 600
+	create every TELLER
+	for each TELLER,
+	LET U.TELLER(TELLER) = 1
+	activate a GENERATOR now
+	start simulation
+
+	print 6 lines with TIME.V * HOURS.V,
+	and MEAN.WAITING.TIME * HOURS.V * MINUTES.V thus
+	THE LAST CUSTOMER LEFT THE BANK AT *.** HOURS.
+	THE AVERAGE CUSTOMER DELAY WAS *.** minutes.
+	TELLER UTILIZATION QUEUE LENGTH
+	AVERAGE MAXIMUM
+	for each TELLER,
+	print 1 line with UTILIZATION(TELLER), AVG.QUEUE.LENGTH(TELLER), MAX.QUEUE.LENGTH(TELLER) thus
+	*.** *.** *.**
+end
+
+process GENERATOR
+	define TIME.TO.CLOSE as a real variable
+	let TIME.TO.CLOSE = DAY.LENGTH / HOURS.V
+	until TIME.V >= TIME.TO.CLOSE,
+	do
+	activate a CUSTOMER now
+	wait exponential.f(MEAN.INTERARRIVAL.TIME, 1) minutes
+	loop
+end
+
+process CUSTOMER
+	define ARRIVAL.TIME as a real variable
+	define MY.CHOICE as an integer variable
+	let ARRIVAL.TIME = TIME.V
+	for each TELLER, with N.X.TELLER(TELLER) = 0,
+	find the first case
+	if found,
+	let MY.CHOICE = TELLER
+	else
+	for each TELLER,
+	compute MY.CHOICE as the minimum(TELLER)
+	of N.Q.TELLER(TELLER)
+	always
+
+	if random.f(1)<.2
+		MY.CHOICE=1
+	else
+		MY.CHOICE = 1
+	always
+
+	request 1 TELLER(MY.CHOICE)
+	let WAITING.TIME = TIME.V - ARRIVAL.TIME
+	work normal.f(MEAN.SERVICE.TIME, 1/6,2) minutes
+	relinquish 1 TELLER(MY.CHOICE)
+end

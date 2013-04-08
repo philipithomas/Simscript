@@ -1,0 +1,68 @@
+'' MM1
+
+preamble
+  processes include GENERATOR and CUSTOMER
+  resources include ATTENDANT
+  tally avg.queue.time as the average of wait.time
+  tally server.utilization as the average of util.attendant
+  accumulate  average.queue.length  as average of queue.length
+  define i, queue.length, util.attendant as integer variable
+  define wait.time, arrival.time as a double variable
+end
+
+main
+ queue.length = 0
+
+ create every ATTENDANT(1)
+ let U.ATTENDANT(1) = 1
+ activate a GENERATOR now
+ start simulation
+end
+
+process GENERATOR
+ for i = 1 to 1000,
+  do
+
+  activate a CUSTOMER now
+  queue.length = queue.length+1
+  if queue.length = 0
+    util.attendant=0
+  else
+    util.attendant=1
+  always
+
+
+  wait exponential.f(3, 1) minutes
+
+ loop
+ call report
+
+end
+
+process CUSTOMER
+  arrival.time = time.v
+  request 1 ATTENDANT(1)
+  work exponential.f(4,1) minutes
+  relinquish 1 ATTENDANT(1)
+  queue.length=queue.length-1
+  if queue.length = 0
+    util.attendant=0
+  else
+    util.attendant=1
+  always
+  wait.time = time.v - arrival.time
+
+end
+
+routine report
+
+  print 4 lines with time.v, server.utilization, average.queue.length, avg.queue.time thus
+  clock time = *******.** minutes
+  the utilization of the server was     **.****
+  the average length of the queue was  ***.**
+  the average queue time was ***.***
+
+
+  stop
+
+end
